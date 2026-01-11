@@ -1,0 +1,347 @@
+{
+  "generated_at": "2026-01-11T19:18:31.818Z",
+  "xivapi_version": "309a1e90d28b6bc6",
+  "categories": {
+    "combat": {
+      "I": [
+        "Aurelia Kiss Materia I",
+        "Battledance Materia I",
+        "Bison Hoof Materia I",
+        "Cactuar Foot Materia I",
+        "Chocobo Down Materia I",
+        "Coeurl Eye Materia I",
+        "Dexterity Materia I",
+        "Earth Materia I",
+        "Fire Materia I",
+        "Funguar Shriek Materia I",
+        "Heavens' Eye Materia I",
+        "Ice Materia I",
+        "Intelligence Materia I",
+        "Lightning Materia I",
+        "Mind Materia I",
+        "Piety Materia I",
+        "Quickarm Materia I",
+        "Quicktongue Materia I",
+        "Savage Aim Materia I",
+        "Savage Might Materia I",
+        "Strength Materia I",
+        "Treant Root Materia I",
+        "Vitality Materia I",
+        "Water Materia I",
+        "Wind Materia I"
+      ],
+      "II": [
+        "Battledance Materia II",
+        "Dexterity Materia II",
+        "Earth Materia II",
+        "Fire Materia II",
+        "Heavens' Eye Materia II",
+        "Ice Materia II",
+        "Intelligence Materia II",
+        "Lightning Materia II",
+        "Mind Materia II",
+        "Piety Materia II",
+        "Quickarm Materia II",
+        "Quicktongue Materia II",
+        "Savage Aim Materia II",
+        "Savage Might Materia II",
+        "Strength Materia II",
+        "Vitality Materia II",
+        "Water Materia II",
+        "Wind Materia II"
+      ],
+      "III": [
+        "Battledance Materia III",
+        "Dexterity Materia III",
+        "Earth Materia III",
+        "Fire Materia III",
+        "Heavens' Eye Materia III",
+        "Ice Materia III",
+        "Intelligence Materia III",
+        "Lightning Materia III",
+        "Mind Materia III",
+        "Piety Materia III",
+        "Quickarm Materia III",
+        "Quicktongue Materia III",
+        "Savage Aim Materia III",
+        "Savage Might Materia III",
+        "Strength Materia III",
+        "Vitality Materia III",
+        "Water Materia III",
+        "Wind Materia III"
+      ],
+      "IV": [
+        "Battledance Materia IV",
+        "Dexterity Materia IV",
+        "Earth Materia IV",
+        "Fire Materia IV",
+        "Heavens' Eye Materia IV",
+        "Ice Materia IV",
+        "Intelligence Materia IV",
+        "Lightning Materia IV",
+        "Mind Materia IV",
+        "Piety Materia IV",
+        "Quickarm Materia IV",
+        "Quicktongue Materia IV",
+        "Savage Aim Materia IV",
+        "Savage Might Materia IV",
+        "Strength Materia IV",
+        "Vitality Materia IV",
+        "Water Materia IV",
+        "Wind Materia IV"
+      ],
+      "V": [
+        "Battledance Materia V",
+        "Dexterity Materia V",
+        "Earth Materia V",
+        "Fire Materia V",
+        "Heavens' Eye Materia V",
+        "Ice Materia V",
+        "Intelligence Materia V",
+        "Lightning Materia V",
+        "Mind Materia V",
+        "Piety Materia V",
+        "Quickarm Materia V",
+        "Quicktongue Materia V",
+        "Savage Aim Materia V",
+        "Savage Might Materia V",
+        "Strength Materia V",
+        "Vitality Materia V",
+        "Water Materia V",
+        "Wind Materia V"
+      ],
+      "VI": [
+        "Battledance Materia VI",
+        "Dexterity Materia VI",
+        "Earth Materia VI",
+        "Fire Materia VI",
+        "Heavens' Eye Materia VI",
+        "Ice Materia VI",
+        "Intelligence Materia VI",
+        "Lightning Materia VI",
+        "Mind Materia VI",
+        "Piety Materia VI",
+        "Quickarm Materia VI",
+        "Quicktongue Materia VI",
+        "Savage Aim Materia VI",
+        "Savage Might Materia VI",
+        "Strength Materia VI",
+        "Vitality Materia VI",
+        "Water Materia VI",
+        "Wind Materia VI"
+      ],
+      "VII": [
+        "Battledance Materia VII",
+        "Heavens' Eye Materia VII",
+        "Piety Materia VII",
+        "Quickarm Materia VII",
+        "Quicktongue Materia VII",
+        "Savage Aim Materia VII",
+        "Savage Might Materia VII"
+      ],
+      "VIII": [
+        "Battledance Materia VIII",
+        "Heavens' Eye Materia VIII",
+        "Piety Materia VIII",
+        "Quickarm Materia VIII",
+        "Quicktongue Materia VIII",
+        "Savage Aim Materia VIII",
+        "Savage Might Materia VIII"
+      ],
+      "IX": [
+        "Battledance Materia IX",
+        "Heavens' Eye Materia IX",
+        "Piety Materia IX",
+        "Quickarm Materia IX",
+        "Quicktongue Materia IX",
+        "Savage Aim Materia IX",
+        "Savage Might Materia IX"
+      ],
+      "X": [
+        "Battledance Materia X",
+        "Heavens' Eye Materia X",
+        "Piety Materia X",
+        "Quickarm Materia X",
+        "Quicktongue Materia X",
+        "Savage Aim Materia X",
+        "Savage Might Materia X"
+      ],
+      "XI": [
+        "Battledance Materia XI",
+        "Heavens' Eye Materia XI",
+        "Piety Materia XI",
+        "Quickarm Materia XI",
+        "Quicktongue Materia XI",
+        "Savage Aim Materia XI",
+        "Savage Might Materia XI"
+      ],
+      "XII": [
+        "Battledance Materia XII",
+        "Heavens' Eye Materia XII",
+        "Piety Materia XII",
+        "Quickarm Materia XII",
+        "Quicktongue Materia XII",
+        "Savage Aim Materia XII",
+        "Savage Might Materia XII"
+      ]
+    },
+    "crafting": {
+      "I": [
+        "Craftsman's Command Materia I",
+        "Craftsman's Competence Materia I",
+        "Craftsman's Cunning Materia I"
+      ],
+      "II": [
+        "Craftsman's Command Materia II",
+        "Craftsman's Competence Materia II",
+        "Craftsman's Cunning Materia II"
+      ],
+      "III": [
+        "Craftsman's Command Materia III",
+        "Craftsman's Competence Materia III",
+        "Craftsman's Cunning Materia III"
+      ],
+      "IV": [
+        "Craftsman's Command Materia IV",
+        "Craftsman's Competence Materia IV",
+        "Craftsman's Cunning Materia IV"
+      ],
+      "V": [
+        "Craftsman's Command Materia V",
+        "Craftsman's Competence Materia V",
+        "Craftsman's Cunning Materia V"
+      ],
+      "VI": [
+        "Craftsman's Command Materia VI",
+        "Craftsman's Competence Materia VI",
+        "Craftsman's Cunning Materia VI"
+      ],
+      "VII": [
+        "Craftsman's Command Materia VII",
+        "Craftsman's Competence Materia VII",
+        "Craftsman's Cunning Materia VII"
+      ],
+      "VIII": [
+        "Craftsman's Command Materia VIII",
+        "Craftsman's Competence Materia VIII",
+        "Craftsman's Cunning Materia VIII"
+      ],
+      "IX": [
+        "Craftsman's Command Materia IX",
+        "Craftsman's Competence Materia IX",
+        "Craftsman's Cunning Materia IX"
+      ],
+      "X": [
+        "Craftsman's Command Materia X",
+        "Craftsman's Competence Materia X",
+        "Craftsman's Cunning Materia X"
+      ],
+      "XI": [
+        "Craftsman's Command Materia XI",
+        "Craftsman's Competence Materia XI",
+        "Craftsman's Cunning Materia XI"
+      ],
+      "XII": [
+        "Craftsman's Command Materia XII",
+        "Craftsman's Competence Materia XII",
+        "Craftsman's Cunning Materia XII"
+      ]
+    },
+    "gathering": {
+      "I": [
+        "Gatherer's Grasp Materia I",
+        "Gatherer's Guerdon Materia I",
+        "Gatherer's Guile Materia I"
+      ],
+      "II": [
+        "Gatherer's Grasp Materia II",
+        "Gatherer's Guerdon Materia II",
+        "Gatherer's Guile Materia II"
+      ],
+      "III": [
+        "Gatherer's Grasp Materia III",
+        "Gatherer's Guerdon Materia III",
+        "Gatherer's Guile Materia III"
+      ],
+      "IV": [
+        "Gatherer's Grasp Materia IV",
+        "Gatherer's Guerdon Materia IV",
+        "Gatherer's Guile Materia IV"
+      ],
+      "V": [
+        "Gatherer's Grasp Materia V",
+        "Gatherer's Guerdon Materia V",
+        "Gatherer's Guile Materia V"
+      ],
+      "VI": [
+        "Gatherer's Grasp Materia VI",
+        "Gatherer's Guerdon Materia VI",
+        "Gatherer's Guile Materia VI"
+      ],
+      "VII": [
+        "Gatherer's Grasp Materia VII",
+        "Gatherer's Guerdon Materia VII",
+        "Gatherer's Guile Materia VII"
+      ],
+      "VIII": [
+        "Gatherer's Grasp Materia VIII",
+        "Gatherer's Guerdon Materia VIII",
+        "Gatherer's Guile Materia VIII"
+      ],
+      "IX": [
+        "Gatherer's Grasp Materia IX",
+        "Gatherer's Guerdon Materia IX",
+        "Gatherer's Guile Materia IX"
+      ],
+      "X": [
+        "Gatherer's Grasp Materia X",
+        "Gatherer's Guerdon Materia X",
+        "Gatherer's Guile Materia X"
+      ],
+      "XI": [
+        "Gatherer's Grasp Materia XI",
+        "Gatherer's Guerdon Materia XI",
+        "Gatherer's Guile Materia XI"
+      ],
+      "XII": [
+        "Gatherer's Grasp Materia XII",
+        "Gatherer's Guerdon Materia XII",
+        "Gatherer's Guile Materia XII"
+      ]
+    }
+  },
+  "base_param_category": {
+    "Strength": "combat",
+    "Vitality": "combat",
+    "Dexterity": "combat",
+    "Intelligence": "combat",
+    "Mind": "combat",
+    "Piety": "combat",
+    "Fire Resistance": "combat",
+    "Ice Resistance": "combat",
+    "Wind Resistance": "combat",
+    "Earth Resistance": "combat",
+    "Lightning Resistance": "combat",
+    "Water Resistance": "combat",
+    "Direct Hit Rate": "combat",
+    "Critical Hit": "combat",
+    "Determination": "combat",
+    "Tenacity": "combat",
+    "Gathering": "gathering",
+    "Perception": "gathering",
+    "GP": "gathering",
+    "Craftsmanship": "crafting",
+    "CP": "crafting",
+    "Control": "crafting",
+    "Skill Speed": "combat",
+    "Spell Speed": "combat",
+    "Slow Resistance": "combat",
+    "Silence Resistance": "combat",
+    "Blind Resistance": "combat",
+    "Poison Resistance": "combat",
+    "Stun Resistance": "combat",
+    "Sleep Resistance": "combat",
+    "Bind Resistance": "combat",
+    "Heavy Resistance": "combat"
+  }
+}

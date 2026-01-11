@@ -51,6 +51,12 @@ Timeout overrides (optional):
 UNIVERSALIS_TIMEOUT_MS=30000 XIVAPI_TIMEOUT_MS=30000 node dist/index.js
 ```
 
+Materia data refresh:
+
+```bash
+pnpm update-materia
+```
+
 ## MCP Usage Guidance
 
 Server-level usage guidance is stored in `src/instructions.ts`. Update it if tools or workflows change.

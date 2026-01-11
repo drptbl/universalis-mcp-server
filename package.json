@@ -17,11 +17,13 @@
     "universalis-mcp-server": "./dist/index.js"
   },
   "files": [
-    "dist"
+    "dist",
+    "data"
   ],
   "scripts": {
     "build": "tsc && chmod 755 ./dist/index.js",
-    "prepublishOnly": "pnpm build",
+    "prepublishOnly": "pnpm update-materia && pnpm build",
+    "update-materia": "node scripts/update-materia-data.js",
     "lint": "biome check .",
     "format": "biome format --write ."
   },

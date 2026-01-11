@@ -28,4 +28,7 @@ Tool guide:
 Notes:
 - world_dc_region accepts a world name/ID, data center name, or region.
 - response_format defaults to markdown; use json for structured processing.
+- Materia categories like "Combat Materia VII", "Crafting Materia VII", and "Gathering Materia VII" are expanded to their specific item names; grade is required.
+- Bulk resolve and profitability tools can fall back to partial matches for unresolved exact inputs; check match_type for "fallback_partial".
+- Materia expansion uses cached XIVAPI data; refresh is controlled by MATERIA_CACHE_TTL_MS and MATERIA_REFRESH.
 `;

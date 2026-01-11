@@ -33,6 +33,12 @@ export interface XivapiRowParams {
   version?: string;
 }
 
+export interface XivapiSheetParams extends XivapiRowParams {
+  rows?: string;
+  after?: number;
+  limit?: number;
+}
+
 export class XivapiClient {
   private baseUrl: string;
   private timeoutMs?: number;
@@ -130,6 +136,18 @@ export class XivapiClient {
       ...(schema !== undefined ? { schema } : {}),
       ...(version !== undefined ? { version } : {}),
     };
+  }
+
+  async getSheetRows(sheet: string, params: XivapiSheetParams = {}) {
+    const normalized = this.withDefaults({ ...(params as unknown as Record<string, unknown>) });
+    return requestJson<Record<string, unknown>>({
+      baseUrl: this.baseUrl,
+      path: `/sheet/${sheet}`,
+      query: normalized,
+      limiter: this.limiter,
+      timeoutMs: this.timeoutMs,
+      userAgent: this.userAgent,
+    });
   }
 
   private withDefaults(params: Record<string, unknown>) {

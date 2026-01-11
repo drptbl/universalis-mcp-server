@@ -3,7 +3,15 @@ import { z } from "zod";
 import { BaseOutputSchema, ResponseFormatSchema } from "../schemas/common.js";
 import type { ClientBundle } from "../services/clients.js";
 import { buildToolResponse } from "../utils/format.js";
-import { buildNameQuery, ensureFieldsInclude, normalizeName } from "../utils/xivapi.js";
+import { expandMateriaCategory } from "../services/materia.js";
+import {
+  buildNameQueryFromTargets,
+  dedupeNameTargets,
+  ensureFieldsInclude,
+  extractNamedResults,
+  findBestResult,
+  type MatchMode,
+} from "../utils/xivapi.js";
 
 const LanguageSchema = z
   .enum(["none", "ja", "en", "de", "fr", "chs", "cht", "kr"])
@@ -21,6 +29,66 @@ const NamesSchema = z
   .min(1)
   .max(100)
   .describe("Item names to resolve (max 100).");
+
+type SearchTarget = {
+  name: string;
+  sourceInput: string;
+  matchMode: MatchMode;
+  origin: "direct" | "expanded";
+};
+
+type ExpansionRecord = {
+  input_name: string;
+  category: string;
+  grade: string | null;
+  expanded_names: string[];
+};
+
+async function buildSearchTargets(names: string[], matchMode: MatchMode, clients: ClientBundle) {
+  const targets: SearchTarget[] = [];
+  const expandedItems: ExpansionRecord[] = [];
+  const missingGradeInputs: string[] = [];
+
+  for (const name of names) {
+    const expansion = await expandMateriaCategory(name, clients.xivapi);
+    if (!expansion) {
+      targets.push({
+        name,
+        sourceInput: name,
+        matchMode,
+        origin: "direct",
+      });
+      continue;
+    }
+
+    expandedItems.push({
+      input_name: name,
+      category: expansion.category,
+      grade: expansion.grade,
+      expanded_names: expansion.expandedNames,
+    });
+
+    if (!expansion.grade) {
+      missingGradeInputs.push(name);
+      continue;
+    }
+
+    for (const expandedName of expansion.expandedNames) {
+      targets.push({
+        name: expandedName,
+        sourceInput: name,
+        matchMode: "exact",
+        origin: "expanded",
+      });
+    }
+  }
+
+  return { targets, expandedItems, missingGradeInputs };
+}
+
+function buildQueryTargets(targets: SearchTarget[]) {
+  return dedupeNameTargets(targets.map((target) => ({ name: target.name, matchMode: target.matchMode })));
+}
 
 export function registerLookupTools(server: McpServer, clients: ClientBundle) {
   server.registerTool(
@@ -62,7 +130,12 @@ export function registerLookupTools(server: McpServer, clients: ClientBundle) {
       },
     },
     async ({ query, match_mode, limit, language, fields, response_format }) => {
-      const queryClause = buildNameQuery([query], match_mode);
+      const expansion = await expandMateriaCategory(query, clients.xivapi);
+      const expandedNames = expansion?.grade ? expansion.expandedNames : null;
+      const queryTargets = expandedNames
+        ? expandedNames.map((name) => ({ name, matchMode: "exact" as const }))
+        : [{ name: query, matchMode: match_mode }];
+      const queryClause = buildNameQueryFromTargets(queryTargets);
 
       const data = await clients.xivapi.search({
         query: queryClause,
@@ -81,6 +154,19 @@ export function registerLookupTools(server: McpServer, clients: ClientBundle) {
           endpoint: "/search",
           query: queryClause,
           limit,
+          ...(expansion
+            ? {
+                expanded_items: {
+                  input_name: query,
+                  category: expansion.category,
+                  grade: expansion.grade,
+                  expanded_names: expansion.expandedNames,
+                },
+              }
+            : {}),
+          ...(expansion && !expansion.grade
+            ? { notes: ["Materia category missing grade. Specify I-XII to expand."] }
+            : {}),
           ...(language ? { language } : {}),
         },
       });
@@ -121,84 +207,129 @@ export function registerLookupTools(server: McpServer, clients: ClientBundle) {
       },
     },
     async ({ names, match_mode, limit, language, fields, response_format }) => {
-      const queryClause = buildNameQuery(names, match_mode);
-      const effectiveLimit = limit ?? Math.min(names.length * 5, 500);
+      const { targets, expandedItems, missingGradeInputs } = await buildSearchTargets(
+        names,
+        match_mode,
+        clients,
+      );
+      const queryTargets = buildQueryTargets(targets);
+      const queryClause = queryTargets.length ? buildNameQueryFromTargets(queryTargets) : "";
+      const effectiveLimit = limit ?? Math.min(queryTargets.length * 5, 500);
       const searchFields = ensureFieldsInclude(fields, ["Name"]);
 
-      const data = await clients.xivapi.search({
-        query: queryClause,
-        sheets: "Item",
-        limit: effectiveLimit,
-        language,
-        fields: searchFields,
-      });
+      const data = queryTargets.length
+        ? await clients.xivapi.search({
+            query: queryClause,
+            sheets: "Item",
+            limit: effectiveLimit,
+            language,
+            fields: searchFields,
+          })
+        : { results: [] };
 
       const results = Array.isArray((data as { results?: unknown }).results)
         ? ((data as { results: Array<Record<string, unknown>> }).results ?? [])
         : [];
+      const namedResults = extractNamedResults(results);
 
-      const namedResults = results
-        .map((result) => {
-          const fieldsObj = result.fields as Record<string, unknown> | undefined;
-          const name = typeof fieldsObj?.Name === "string" ? fieldsObj.Name : undefined;
-          if (!name) return null;
-          return {
-            name,
-            normalizedName: normalizeName(name),
-            result,
-          };
-        })
-        .filter((entry): entry is { name: string; normalizedName: string; result: Record<string, unknown> } =>
-          Boolean(entry),
-        );
-
-      const matches = names.map((input) => {
-        const key = normalizeName(input);
-        const candidates = namedResults
-          .filter((entry) =>
-            match_mode === "exact" ? entry.normalizedName === key : entry.normalizedName.includes(key),
-          )
-          .map((entry) => entry.result);
-
-        if (candidates.length === 0) {
-          return {
-            input_name: input,
-            matched_name: null,
-            item_id: null,
-            score: null,
-            match_type: "none",
-          };
-        }
-        const best = candidates
-          .sort((a, b) => {
-            const scoreA = typeof a.score === "number" ? a.score : 0;
-            const scoreB = typeof b.score === "number" ? b.score : 0;
-            return scoreB - scoreA;
-          })[0];
-        const fieldsObj = best.fields as Record<string, unknown> | undefined;
+      const matches = targets.map((target) => {
+        const best = findBestResult(namedResults, target.name, target.matchMode);
+        const fieldsObj = best?.fields as Record<string, unknown> | undefined;
         return {
-          input_name: input,
+          input_name: target.sourceInput,
+          expanded_name: target.origin === "expanded" ? target.name : null,
           matched_name: typeof fieldsObj?.Name === "string" ? fieldsObj.Name : null,
-          item_id: typeof best.row_id === "number" ? best.row_id : null,
-          score: typeof best.score === "number" ? best.score : null,
-          match_type: match_mode,
+          item_id: typeof best?.row_id === "number" ? best.row_id : null,
+          score: typeof best?.score === "number" ? best.score : null,
+          match_type: best ? (target.origin === "expanded" ? "expanded" : target.matchMode) : "none",
+          match_mode: target.matchMode,
+          resolution_source: target.origin,
         };
       });
 
-      const unmatched = matches.filter((match) => match.item_id == null).map((match) => match.input_name);
+      const missingGradeMatches = missingGradeInputs.map((name) => ({
+        input_name: name,
+        expanded_name: null,
+        matched_name: null,
+        item_id: null,
+        score: null,
+        match_type: "missing_grade",
+        match_mode: match_mode,
+        resolution_source: "category",
+        notes: ["Materia category missing grade. Specify I-XII to expand."],
+      }));
+
+      const unresolvedDirect = targets
+        .map((target, index) => ({ target, index }))
+        .filter(
+          ({ target, index }) =>
+            target.origin === "direct" && target.matchMode === "exact" && matches[index]?.item_id == null,
+        );
+
+      let fallbackResults: Array<Record<string, unknown>> = [];
+      let fallbackQueryClause: string | null = null;
+      if (unresolvedDirect.length > 0) {
+        const fallbackTargets = dedupeNameTargets(
+          unresolvedDirect.map(({ target }) => ({
+            name: target.name,
+            matchMode: "partial",
+          })),
+        );
+        fallbackQueryClause = buildNameQueryFromTargets(fallbackTargets);
+        const fallbackLimit = Math.min(fallbackTargets.length * 5, 500);
+        const fallbackData = await clients.xivapi.search({
+          query: fallbackQueryClause,
+          sheets: "Item",
+          limit: fallbackLimit,
+          language,
+          fields: searchFields,
+        });
+
+        fallbackResults = Array.isArray((fallbackData as { results?: unknown }).results)
+          ? ((fallbackData as { results: Array<Record<string, unknown>> }).results ?? [])
+          : [];
+        const fallbackNamedResults = extractNamedResults(fallbackResults);
+
+        for (const { target, index } of unresolvedDirect) {
+          const best = findBestResult(fallbackNamedResults, target.name, "partial");
+          if (!best) continue;
+          const fieldsObj = best.fields as Record<string, unknown> | undefined;
+          matches[index] = {
+            input_name: target.sourceInput,
+            expanded_name: null,
+            matched_name: typeof fieldsObj?.Name === "string" ? fieldsObj.Name : null,
+            item_id: typeof best.row_id === "number" ? best.row_id : null,
+            score: typeof best.score === "number" ? best.score : null,
+            match_type: "fallback_partial",
+            match_mode: target.matchMode,
+            resolution_source: target.origin,
+          };
+        }
+      }
+
+      const allMatches = [...matches, ...missingGradeMatches];
+      const resolvedInputs = new Set(allMatches.filter((entry) => entry.item_id != null).map((entry) => entry.input_name));
+      const unmatched = names.filter((name) => !resolvedInputs.has(name));
+      const unmatchedExpanded = allMatches
+        .filter((entry) => entry.resolution_source === "expanded" && entry.item_id == null)
+        .map((entry) => entry.expanded_name ?? entry.input_name);
 
       return buildToolResponse({
         title: "Resolved Items (Bulk)",
         responseFormat: response_format,
         data: {
-          matches,
+          matches: allMatches,
           unmatched,
-          results,
+          unmatched_expanded: unmatchedExpanded,
+          results: results.concat(fallbackResults),
+          expanded_items: expandedItems,
+          missing_expansions: missingGradeInputs,
         },
         meta: {
           source: "xivapi",
           endpoint: "/search",
           query: queryClause,
+          ...(fallbackQueryClause ? { fallback_query: fallbackQueryClause } : {}),
           limit: effectiveLimit,
           ...(language ? { language } : {}),
         },

@@ -2,8 +2,16 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { BaseOutputSchema, ResponseFormatSchema } from "../schemas/common.js";
 import type { ClientBundle } from "../services/clients.js";
+import { expandMateriaCategory } from "../services/materia.js";
 import { buildToolResponse } from "../utils/format.js";
-import { buildNameQuery, ensureFieldsInclude, normalizeName } from "../utils/xivapi.js";
+import {
+  buildNameQueryFromTargets,
+  dedupeNameTargets,
+  ensureFieldsInclude,
+  extractNamedResults,
+  findBestResult,
+  type MatchMode,
+} from "../utils/xivapi.js";
 
 const LanguageSchema = z
   .enum(["none", "ja", "en", "de", "fr", "chs", "cht", "kr"])
@@ -32,6 +40,101 @@ const CostItemSchema = z
     cost_unit: z.string().optional().describe('Cost unit label. Example: "Bicolor Gemstone".'),
   })
   .strict();
+
+type ItemTarget = {
+  name: string;
+  sourceInput: string;
+  cost: number;
+  cost_unit: string;
+  matchMode: MatchMode;
+  origin: "direct" | "expanded";
+};
+
+type ExpansionRecord = {
+  input_name: string;
+  category: string;
+  grade: string | null;
+  expanded_names: string[];
+};
+
+type MissingGradeItem = {
+  input_name: string;
+  cost: number;
+  cost_unit: string;
+};
+
+type ResolvedEntry = {
+  input_name: string;
+  expanded_name: string | null;
+  resolved_name: string | null;
+  item_id: number | null;
+  score: number | null;
+  match_type: string;
+  match_mode: MatchMode;
+  resolution_source: "direct" | "expanded" | "category";
+  cost: number;
+  cost_unit: string;
+  notes?: string[];
+};
+
+async function buildCostTargets(
+  items: Array<z.infer<typeof CostItemSchema>>,
+  matchMode: MatchMode,
+  clients: ClientBundle,
+) {
+  const targets: ItemTarget[] = [];
+  const expandedItems: ExpansionRecord[] = [];
+  const missingGradeItems: MissingGradeItem[] = [];
+
+  for (const item of items) {
+    const costUnit = item.cost_unit ?? "Bicolor Gemstone";
+    const expansion = await expandMateriaCategory(item.name, clients.xivapi);
+    if (!expansion) {
+      targets.push({
+        name: item.name,
+        sourceInput: item.name,
+        cost: item.cost,
+        cost_unit: costUnit,
+        matchMode,
+        origin: "direct",
+      });
+      continue;
+    }
+
+    expandedItems.push({
+      input_name: item.name,
+      category: expansion.category,
+      grade: expansion.grade,
+      expanded_names: expansion.expandedNames,
+    });
+
+    if (!expansion.grade) {
+      missingGradeItems.push({
+        input_name: item.name,
+        cost: item.cost,
+        cost_unit: costUnit,
+      });
+      continue;
+    }
+
+    for (const expandedName of expansion.expandedNames) {
+      targets.push({
+        name: expandedName,
+        sourceInput: item.name,
+        cost: item.cost,
+        cost_unit: costUnit,
+        matchMode: "exact",
+        origin: "expanded",
+      });
+    }
+  }
+
+  return { targets, expandedItems, missingGradeItems };
+}
+
+function buildQueryTargets(targets: ItemTarget[]) {
+  return dedupeNameTargets(targets.map((target) => ({ name: target.name, matchMode: target.matchMode })));
+}
 
 const AggregatedScopeOrder = ["world", "dc", "region"] as const;
 
@@ -87,76 +190,112 @@ export function registerWorkflowTools(server: McpServer, clients: ClientBundle) 
       },
     },
     async ({ world_dc_region, items, match_mode, price_metric, price_variant, language, response_format }) => {
-      const uniqueNames = Array.from(new Set(items.map((item) => item.name)));
-      const queryClause = buildNameQuery(uniqueNames, match_mode);
+      const { targets, expandedItems, missingGradeItems } = await buildCostTargets(
+        items,
+        match_mode,
+        clients,
+      );
+      const queryTargets = buildQueryTargets(targets);
+      const queryClause = queryTargets.length ? buildNameQueryFromTargets(queryTargets) : "";
       const searchFields = ensureFieldsInclude(undefined, ["Name"]);
 
-      const searchData = await clients.xivapi.search({
-        query: queryClause,
-        sheets: "Item",
-        limit: Math.min(uniqueNames.length * 5, 500),
-        language,
-        fields: searchFields,
-      });
+      const searchData = queryTargets.length
+        ? await clients.xivapi.search({
+            query: queryClause,
+            sheets: "Item",
+            limit: Math.min(queryTargets.length * 5, 500),
+            language,
+            fields: searchFields,
+          })
+        : { results: [] };
 
       const results = Array.isArray((searchData as { results?: unknown }).results)
         ? ((searchData as { results: Array<Record<string, unknown>> }).results ?? [])
         : [];
 
-      const namedResults = results
-        .map((result) => {
-          const fieldsObj = result.fields as Record<string, unknown> | undefined;
-          const name = typeof fieldsObj?.Name === "string" ? fieldsObj.Name : undefined;
-          if (!name) return null;
-          return {
-            name,
-            normalizedName: normalizeName(name),
-            result,
-          };
-        })
-        .filter((entry): entry is { name: string; normalizedName: string; result: Record<string, unknown> } =>
-          Boolean(entry),
-        );
+      const namedResults = extractNamedResults(results);
 
-      const resolved = items.map((item) => {
-        const key = normalizeName(item.name);
-        const candidates = namedResults
-          .filter((entry) =>
-            match_mode === "exact" ? entry.normalizedName === key : entry.normalizedName.includes(key),
-          )
-          .map((entry) => entry.result);
-
-        if (candidates.length === 0) {
-          return {
-            input_name: item.name,
-            resolved_name: null,
-            item_id: null,
-            score: null,
-            match_type: "none",
-            cost: item.cost,
-            cost_unit: item.cost_unit ?? "Bicolor Gemstone",
-          };
-        }
-
-        const best = candidates
-          .sort((a, b) => {
-            const scoreA = typeof a.score === "number" ? a.score : 0;
-            const scoreB = typeof b.score === "number" ? b.score : 0;
-            return scoreB - scoreA;
-          })[0];
-        const fieldsObj = best.fields as Record<string, unknown> | undefined;
+      const resolved: ResolvedEntry[] = targets.map((target) => {
+        const best = findBestResult(namedResults, target.name, target.matchMode);
+        const fieldsObj = best?.fields as Record<string, unknown> | undefined;
         return {
-          input_name: item.name,
+          input_name: target.sourceInput,
+          expanded_name: target.origin === "expanded" ? target.name : null,
           resolved_name: typeof fieldsObj?.Name === "string" ? fieldsObj.Name : null,
-          item_id: typeof best.row_id === "number" ? best.row_id : null,
-          score: typeof best.score === "number" ? best.score : null,
-          match_type: match_mode,
-          cost: item.cost,
-          cost_unit: item.cost_unit ?? "Bicolor Gemstone",
+          item_id: typeof best?.row_id === "number" ? best.row_id : null,
+          score: typeof best?.score === "number" ? best.score : null,
+          match_type: best ? (target.origin === "expanded" ? "expanded" : target.matchMode) : "none",
+          match_mode: target.matchMode,
+          resolution_source: target.origin,
+          cost: target.cost,
+          cost_unit: target.cost_unit,
         };
       });
 
-      const unresolved = resolved.filter((entry) => entry.item_id == null);
+      const unresolvedDirect = targets
+        .map((target, index) => ({ target, index }))
+        .filter(
+          ({ target, index }) =>
+            target.origin === "direct" && target.matchMode === "exact" && resolved[index]?.item_id == null,
+        );
+
+      let fallbackResults: Array<Record<string, unknown>> = [];
+      let fallbackQueryClause: string | null = null;
+      if (unresolvedDirect.length > 0) {
+        const fallbackTargets = dedupeNameTargets(
+          unresolvedDirect.map(({ target }) => ({
+            name: target.name,
+            matchMode: "partial",
+          })),
+        );
+        fallbackQueryClause = buildNameQueryFromTargets(fallbackTargets);
+        const fallbackData = await clients.xivapi.search({
+          query: fallbackQueryClause,
+          sheets: "Item",
+          limit: Math.min(fallbackTargets.length * 5, 500),
+          language,
+          fields: searchFields,
+        });
+
+        fallbackResults = Array.isArray((fallbackData as { results?: unknown }).results)
+          ? ((fallbackData as { results: Array<Record<string, unknown>> }).results ?? [])
+          : [];
+        const fallbackNamedResults = extractNamedResults(fallbackResults);
+
+        for (const { target, index } of unresolvedDirect) {
+          const best = findBestResult(fallbackNamedResults, target.name, "partial");
+          if (!best) continue;
+          const fieldsObj = best.fields as Record<string, unknown> | undefined;
+          resolved[index] = {
+            input_name: target.sourceInput,
+            expanded_name: null,
+            resolved_name: typeof fieldsObj?.Name === "string" ? fieldsObj.Name : null,
+            item_id: typeof best.row_id === "number" ? best.row_id : null,
+            score: typeof best.score === "number" ? best.score : null,
+            match_type: "fallback_partial",
+            match_mode: target.matchMode,
+            resolution_source: target.origin,
+            cost: target.cost,
+            cost_unit: target.cost_unit,
+          };
+        }
+      }
+
+      const missingGradeResolved: ResolvedEntry[] = missingGradeItems.map((item) => ({
+        input_name: item.input_name,
+        expanded_name: null,
+        resolved_name: null,
+        item_id: null,
+        score: null,
+        match_type: "missing_grade",
+        match_mode: match_mode,
+        resolution_source: "category",
+        cost: item.cost,
+        cost_unit: item.cost_unit,
+        notes: ["Materia category missing grade. Specify I-XII to expand."],
+      }));
+
+      const allResolved: ResolvedEntry[] = [...resolved, ...missingGradeResolved];
       const resolvedIds = resolved
         .map((entry) => entry.item_id)
         .filter((id): id is number => typeof id === "number");
@@ -176,8 +315,18 @@ export function registerWorkflowTools(server: McpServer, clients: ClientBundle) 
         }
       }
 
-      const ranked = resolved.map((entry) => {
+      const resolvedInputs = new Set(
+        allResolved.filter((entry) => entry.item_id != null).map((entry) => entry.input_name),
+      );
+      const unmatched = items.map((item) => item.name).filter((name) => !resolvedInputs.has(name));
+      const unmatchedExpanded = allResolved
+        .filter((entry) => entry.resolution_source === "expanded" && entry.item_id == null)
+        .map((entry) => entry.expanded_name ?? entry.input_name);
+
+      const ranked = allResolved.map((entry) => {
         if (!entry.item_id) {
+          const notes = Array.isArray(entry.notes) ? [...entry.notes] : [];
+          if (notes.length === 0) notes.push("Unresolved item name.");
           return {
             ...entry,
             price: null,
@@ -186,7 +335,7 @@ export function registerWorkflowTools(server: McpServer, clients: ClientBundle) 
             demand_scope: null,
             gil_per_cost: null,
             ranking_score: null,
-            notes: ["Unresolved item name."],
+            notes,
           };
         }
 
@@ -237,7 +386,7 @@ export function registerWorkflowTools(server: McpServer, clients: ClientBundle) 
 
       const top = ranked.filter((entry) => entry.ranking_score != null).slice(0, 3);
       const summaryLines = top.map((entry, index) => {
-        const name = entry.resolved_name ?? entry.input_name;
+        const name = entry.resolved_name ?? entry.expanded_name ?? entry.input_name;
         const score = entry.ranking_score != null ? entry.ranking_score.toFixed(2) : "n/a";
         return `${index + 1}. ${name} (${score} score)`;
       });
@@ -247,7 +396,10 @@ export function registerWorkflowTools(server: McpServer, clients: ClientBundle) 
         responseFormat: response_format,
         data: {
           ranking: ranked,
-          unmatched: unresolved.map((entry) => entry.input_name),
+          unmatched,
+          unmatched_expanded: unmatchedExpanded,
+          expanded_items: expandedItems,
+          missing_expansions: missingGradeItems.map((item) => item.input_name),
         },
         meta: {
           source: "universalis",
@@ -255,6 +407,8 @@ export function registerWorkflowTools(server: McpServer, clients: ClientBundle) 
           world_dc_region,
           price_metric,
           price_variant,
+          query: queryClause,
+          ...(fallbackQueryClause ? { fallback_query: fallbackQueryClause } : {}),
         },
         summaryLines,
       });
