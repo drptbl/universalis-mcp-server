@@ -1,5 +1,5 @@
 import Bottleneck from "bottleneck";
-import { DEFAULT_TIMEOUT_MS } from "../constants.js";
+import { DEFAULT_UNIVERSALIS_TIMEOUT_MS, DEFAULT_XIVAPI_TIMEOUT_MS } from "../constants.js";
 import { UniversalisClient } from "./universalis.js";
 import { XivapiClient } from "./xivapi.js";
 
@@ -34,12 +34,12 @@ export function createClients(options: ClientOptions = {}): ClientBundle {
   return {
     universalis: new UniversalisClient({
       limiter: universalisLimiter,
-      timeoutMs: options.universalisTimeoutMs ?? DEFAULT_TIMEOUT_MS,
+      timeoutMs: options.universalisTimeoutMs ?? DEFAULT_UNIVERSALIS_TIMEOUT_MS,
       userAgent: options.userAgent,
     }),
     xivapi: new XivapiClient({
       limiter: xivapiLimiter,
-      timeoutMs: options.xivapiTimeoutMs ?? DEFAULT_TIMEOUT_MS,
+      timeoutMs: options.xivapiTimeoutMs ?? DEFAULT_XIVAPI_TIMEOUT_MS,
       userAgent: options.userAgent,
       defaultLanguage: options.xivapiLanguage,
       defaultVersion: options.xivapiVersion,
