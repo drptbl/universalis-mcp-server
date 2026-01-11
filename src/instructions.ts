@@ -41,6 +41,10 @@ Saddlebag tools (FFXIV):
 - saddlebag_get_craftsim: crafting profitability scan (use max_results to limit payloads).
 - saddlebag_get_blog_description: item description text lookup.
 
+Wiki tools:
+- wiki_list_pages: list curated Saddlebag/Universalis guide pages.
+- wiki_get_page: fetch a wiki page by slug for extra context.
+
 Notes:
 - world_dc_region accepts a world name/ID, data center name, or region.
 - response_format defaults to markdown; use json for structured processing.
@@ -53,4 +57,5 @@ Notes:
 - Saddlebag best-deals is excluded (premium gated + inconsistent API validation).
 - Some Saddlebag endpoints call Universalis directly; be mindful of rate limits.
 - saddlebag_get_raw_stats supports item_ids = -1 for all items and can return very large payloads.
+- Wiki pages are curated snapshots; refresh with scripts/update-wiki-docs.mjs as needed.
 `;

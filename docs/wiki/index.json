@@ -1,0 +1,153 @@
+{
+  "sources": [
+    {
+      "id": "saddlebag",
+      "title": "Saddlebag Exchange Wiki",
+      "repo": "ff14-advanced-market-search/saddlebag-with-pockets",
+      "base_url": "https://github.com/ff14-advanced-market-search/saddlebag-with-pockets/wiki",
+      "pages": [
+        {
+          "slug": "Item-categories-ids-and-list",
+          "file": "item-categories-ids-and-list.md",
+          "title": "Item categories ids and list",
+          "description": "Category filter IDs used by Saddlebag tools.",
+          "url": "https://github.com/ff14-advanced-market-search/saddlebag-with-pockets/wiki/Item-categories-ids-and-list"
+        },
+        {
+          "slug": "FFXIV-job-category-ids",
+          "file": "ffxiv-job-category-ids.md",
+          "title": "FFXIV job category ids",
+          "description": "Job IDs used by crafting and shopping list tools.",
+          "url": "https://github.com/ff14-advanced-market-search/saddlebag-with-pockets/wiki/FFXIV-job-category-ids"
+        },
+        {
+          "slug": "How-to-use-the-FFXIV-crafting-profit-simulator-(craftsim)",
+          "file": "how-to-use-the-ffxiv-crafting-profit-simulator-craftsim.md",
+          "title": "How to use the FFXIV crafting profit simulator",
+          "description": "Craftsim workflow and parameter guidance.",
+          "url": "https://github.com/ff14-advanced-market-search/saddlebag-with-pockets/wiki/How-to-use-the-FFXIV-crafting-profit-simulator-(craftsim)"
+        },
+        {
+          "slug": "How-to-trade-using-our-FFXIV-Market-Overview",
+          "file": "how-to-trade-using-our-ffxiv-market-overview.md",
+          "title": "How to trade using the FFXIV market overview",
+          "description": "Marketshare overview workflow and filters.",
+          "url": "https://github.com/ff14-advanced-market-search/saddlebag-with-pockets/wiki/How-to-trade-using-our-FFXIV-Market-Overview"
+        },
+        {
+          "slug": "FFXIV-Advanced-Undercut-Alert-Options",
+          "file": "ffxiv-advanced-undercut-alert-options.md",
+          "title": "FFXIV advanced undercut alert options",
+          "description": "Advanced undercut alert parameters.",
+          "url": "https://github.com/ff14-advanced-market-search/saddlebag-with-pockets/wiki/FFXIV-Advanced-Undercut-Alert-Options"
+        },
+        {
+          "slug": "FFXIV-Sale-Alerts",
+          "file": "ffxiv-sale-alerts.md",
+          "title": "FFXIV sale alerts",
+          "description": "Sale alert inputs and usage.",
+          "url": "https://github.com/ff14-advanced-market-search/saddlebag-with-pockets/wiki/FFXIV-Sale-Alerts"
+        },
+        {
+          "slug": "Allagan-Tools-Inventory-Analysis",
+          "file": "allagan-tools-inventory-analysis.md",
+          "title": "Allagan tools inventory analysis",
+          "description": "Allagan Tools data import and alerts.",
+          "url": "https://github.com/ff14-advanced-market-search/saddlebag-with-pockets/wiki/Allagan-Tools-Inventory-Analysis"
+        },
+        {
+          "slug": "FFXIV-Experimental-Discount-Price-Sniper",
+          "file": "ffxiv-experimental-discount-price-sniper.md",
+          "title": "FFXIV experimental discount price sniper",
+          "description": "Discount price sniper guide and thresholds.",
+          "url": "https://github.com/ff14-advanced-market-search/saddlebag-with-pockets/wiki/FFXIV-Experimental-Discount-Price-Sniper"
+        },
+        {
+          "slug": "FFXIV-Sale-Leads",
+          "file": "ffxiv-sale-leads.md",
+          "title": "FFXIV sale leads",
+          "description": "Sale leads ideas and examples.",
+          "url": "https://github.com/ff14-advanced-market-search/saddlebag-with-pockets/wiki/FFXIV-Sale-Leads"
+        },
+        {
+          "slug": "TLDR:-How-to-earn-gil-with-cross-server-trading",
+          "file": "tldr-how-to-earn-gil-with-cross-server-trading.md",
+          "title": "TLDR: How to earn gil with cross server trading",
+          "description": "Condensed workflow for cross-server trading.",
+          "url": "https://github.com/ff14-advanced-market-search/saddlebag-with-pockets/wiki/TLDR:-How-to-earn-gil-with-cross-server-trading"
+        },
+        {
+          "slug": "API-Call-Guide",
+          "file": "api-call-guide.md",
+          "title": "API call guide",
+          "description": "General API notes and examples.",
+          "url": "https://github.com/ff14-advanced-market-search/saddlebag-with-pockets/wiki/API-Call-Guide"
+        }
+      ]
+    },
+    {
+      "id": "universalis",
+      "title": "Universalis Guides Wiki",
+      "repo": "Universalis-FFXIV/guides",
+      "base_url": "https://github.com/Universalis-FFXIV/guides/wiki",
+      "pages": [
+        {
+          "slug": "API-App-Overview",
+          "file": "api-app-overview.md",
+          "title": "API app overview",
+          "description": "Universalis API overview and usage context.",
+          "url": "https://github.com/Universalis-FFXIV/guides/wiki/API-App-Overview"
+        },
+        {
+          "slug": "How-to-search-for-items-on-Universalis-and-Saddlebag-Exchange",
+          "file": "how-to-search-for-items-on-universalis-and-saddlebag-exchange.md",
+          "title": "How to search for items on Universalis and Saddlebag Exchange",
+          "description": "Item search workflow notes.",
+          "url": "https://github.com/Universalis-FFXIV/guides/wiki/How-to-search-for-items-on-Universalis-and-Saddlebag-Exchange"
+        },
+        {
+          "slug": "How-to-make-Universalis-Lists",
+          "file": "how-to-make-universalis-lists.md",
+          "title": "How to make Universalis lists",
+          "description": "Universalis list creation guide.",
+          "url": "https://github.com/Universalis-FFXIV/guides/wiki/How-to-make-Universalis-Lists"
+        },
+        {
+          "slug": "How-to-setup-Universalis-Alerts",
+          "file": "how-to-setup-universalis-alerts.md",
+          "title": "How to setup Universalis alerts",
+          "description": "Alert setup and usage guidance.",
+          "url": "https://github.com/Universalis-FFXIV/guides/wiki/How-to-setup-Universalis-Alerts"
+        },
+        {
+          "slug": "Navigating-an-item-overview-on-Universalis",
+          "file": "navigating-an-item-overview-on-universalis.md",
+          "title": "Navigating an item overview on Universalis",
+          "description": "Item overview explanation and metrics.",
+          "url": "https://github.com/Universalis-FFXIV/guides/wiki/Navigating-an-item-overview-on-Universalis"
+        },
+        {
+          "slug": "How-to-use-Universalis-Favorites",
+          "file": "how-to-use-universalis-favorites.md",
+          "title": "How to use Universalis favorites",
+          "description": "Favorites workflow and recommendations.",
+          "url": "https://github.com/Universalis-FFXIV/guides/wiki/How-to-use-Universalis-Favorites"
+        },
+        {
+          "slug": "How-to-help-update-the-data-on-Universalis%3F",
+          "file": "how-to-help-update-the-data-on-universalis.md",
+          "title": "How to help update the data on Universalis",
+          "description": "Contributor guidance for data updates.",
+          "url": "https://github.com/Universalis-FFXIV/guides/wiki/How-to-help-update-the-data-on-Universalis%3F"
+        },
+        {
+          "slug": "Interactive-Tutorials",
+          "file": "interactive-tutorials.md",
+          "title": "Interactive tutorials",
+          "description": "Interactive tutorial index.",
+          "url": "https://github.com/Universalis-FFXIV/guides/wiki/Interactive-Tutorials"
+        }
+      ]
+    }
+  ]
+}

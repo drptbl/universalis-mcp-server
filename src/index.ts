@@ -10,6 +10,7 @@ import { registerMarketTools } from "./tools/market.js";
 import { registerReferenceTools } from "./tools/reference.js";
 import { registerSaddlebagTools } from "./tools/saddlebag.js";
 import { registerStatsTools } from "./tools/stats.js";
+import { registerWikiTools } from "./tools/wiki.js";
 import { registerWorkflowTools } from "./tools/workflows.js";
 
 function toNumber(value: string | undefined) {
@@ -46,6 +47,7 @@ async function main() {
   registerStatsTools(server, clients);
   registerLookupTools(server, clients);
   registerSaddlebagTools(server, clients);
+  registerWikiTools(server);
   registerWorkflowTools(server, clients);
 
   server.registerPrompt(

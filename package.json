@@ -1,7 +1,7 @@
 {
   "name": "universalis-mcp-server",
   "version": "0.2.0",
-  "description": "MCP server for Universalis and XIVAPI",
+  "description": "MCP server for Universalis, Saddlebag Exchange, and XIVAPI",
   "author": "Jakub Mucha <jakub.mucha@icloud.com>",
   "repository": {
     "type": "git",
@@ -18,12 +18,14 @@
   },
   "files": [
     "dist",
-    "data"
+    "data",
+    "docs/wiki"
   ],
   "scripts": {
     "build": "tsc && chmod 755 ./dist/index.js",
-    "prepublishOnly": "pnpm update-materia && pnpm build",
+    "prepublishOnly": "pnpm update-materia && pnpm update-wiki-docs && pnpm build",
     "update-materia": "node scripts/update-materia-data.js",
+    "update-wiki-docs": "node scripts/update-wiki-docs.mjs",
     "lint": "biome check .",
     "format": "biome format --write ."
   },

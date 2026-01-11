@@ -43,6 +43,11 @@ All tools support `response_format` as `markdown` or `json`.
 
 Best-deals is excluded (premium gated + inconsistent API validation).
 
+### Guides (Wiki snapshots)
+
+- `wiki_list_pages`: List curated wiki pages for Saddlebag and Universalis guides.
+- `wiki_get_page`: Fetch a wiki page by slug for extra context.
+
 ### Reference data (Universalis)
 
 - `universalis_list_worlds`: List worlds with pagination.
@@ -90,6 +95,12 @@ pnpm install
 pnpm build
 ```
 
+To refresh curated wiki snapshots:
+
+```bash
+pnpm update-wiki-docs
+```
+
 ## Run (stdio)
 
 ```bash
@@ -129,3 +140,4 @@ If you change code, re-run `pnpm build` and restart the MCP connection.
 - Rate limits are enforced client-side for Universalis and XIVAPI.
 - Tools support `response_format` as `markdown` or `json`.
 - Some Saddlebag endpoints proxy Universalis data; avoid excessive polling.
+- Wiki pages are curated snapshots stored in `docs/wiki`.
