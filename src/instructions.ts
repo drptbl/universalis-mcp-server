@@ -1,7 +1,7 @@
 export const SERVER_INSTRUCTIONS = `Use this server to analyze FFXIV market data via Universalis and item data via XIVAPI.
 
 Tool guide:
-- universalis_rank_items_by_profitability: best for "most profitable to farm" questions with cost inputs; ranks by demand and profit.
+- universalis_rank_items_by_profitability: best for "most profitable to farm" questions with cost inputs; ranks by demand and profit (defaults to best HQ/NQ price, can filter unmarketable items, and includes supply metrics).
 - universalis_resolve_items_by_names: bulk name-to-ID resolution in one query; prefer over per-item search.
 - universalis_resolve_items_by_name: single-item name search.
 - universalis_get_item_by_id: fetch one item row by ID from XIVAPI.
@@ -31,4 +31,6 @@ Notes:
 - Materia categories like "Combat Materia VII", "Crafting Materia VII", and "Gathering Materia VII" are expanded to their specific item names; grade is required.
 - Bulk resolve and profitability tools can fall back to partial matches for unresolved exact inputs; check match_type for "fallback_partial".
 - Materia expansion uses cached XIVAPI data; refresh is controlled by MATERIA_CACHE_TTL_MS and MATERIA_REFRESH.
+- Profitability tool options: marketable_only (default true), min_velocity threshold, include_supply (default true).
+- price_variant defaults to "best".
 `;

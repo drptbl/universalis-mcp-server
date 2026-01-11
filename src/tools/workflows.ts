@@ -12,6 +12,7 @@ import {
   findBestResult,
   type MatchMode,
 } from "../utils/xivapi.js";
+import { chunkArray } from "../utils/array.js";
 
 const LanguageSchema = z
   .enum(["none", "ja", "en", "de", "fr", "chs", "cht", "kr"])
@@ -30,7 +31,7 @@ const PriceMetricSchema = z
 
 const PriceVariantSchema = z
   .enum(["nq", "hq", "best"])
-  .default("nq")
+  .default("best")
   .describe("Which price variant to consider when ranking.");
 
 const CostItemSchema = z
@@ -75,6 +76,7 @@ type ResolvedEntry = {
   cost: number;
   cost_unit: string;
   notes?: string[];
+  marketable?: boolean | null;
 };
 
 async function buildCostTargets(
@@ -166,17 +168,30 @@ export function registerWorkflowTools(server: McpServer, clients: ClientBundle) 
     {
       title: "Rank Items by Profitability",
       description:
-        "Resolve item names with XIVAPI, fetch aggregated market data, and rank items by demand and profit.",
+        "Resolve item names with XIVAPI, fetch aggregated market data, and rank items by demand, profit, and supply context.",
       inputSchema: z
         .object({
           world_dc_region: z
             .string()
             .min(1)
             .describe('World, data center, or region. Example: "Moogle".'),
-          items: z.array(CostItemSchema).min(1).max(100),
+          items: z.array(CostItemSchema).min(1).max(300),
           match_mode: MatchModeSchema,
           price_metric: PriceMetricSchema,
           price_variant: PriceVariantSchema,
+          marketable_only: z
+            .boolean()
+            .default(true)
+            .describe("Filter out unmarketable items using Universalis marketable list."),
+          min_velocity: z
+            .number()
+            .nonnegative()
+            .optional()
+            .describe("Minimum daily sale velocity required to score an item."),
+          include_supply: z
+            .boolean()
+            .default(true)
+            .describe("Include supply metrics (units for sale, listings count)."),
           language: LanguageSchema,
           response_format: ResponseFormatSchema,
         })
@@ -189,7 +204,18 @@ export function registerWorkflowTools(server: McpServer, clients: ClientBundle) 
         openWorldHint: true,
       },
     },
-    async ({ world_dc_region, items, match_mode, price_metric, price_variant, language, response_format }) => {
+    async ({
+      world_dc_region,
+      items,
+      match_mode,
+      price_metric,
+      price_variant,
+      marketable_only,
+      min_velocity,
+      include_supply,
+      language,
+      response_format,
+    }) => {
       const { targets, expandedItems, missingGradeItems } = await buildCostTargets(
         items,
         match_mode,
@@ -296,22 +322,86 @@ export function registerWorkflowTools(server: McpServer, clients: ClientBundle) 
       }));
 
       const allResolved: ResolvedEntry[] = [...resolved, ...missingGradeResolved];
-      const resolvedIds = resolved
-        .map((entry) => entry.item_id)
-        .filter((id): id is number => typeof id === "number");
+      const marketableIds =
+        marketable_only && resolved.some((entry) => entry.item_id != null)
+          ? new Set(await clients.universalis.listMarketableItems())
+          : null;
+      const resolvedIdSet = new Set<number>();
+      const marketableFilteredIds: number[] = [];
 
-      const aggregated = resolvedIds.length
-        ? await clients.universalis.getAggregatedMarketData(world_dc_region, resolvedIds)
-        : { results: [] };
+      for (const entry of resolved) {
+        if (entry.item_id == null) continue;
+        if (marketableIds && !marketableIds.has(entry.item_id)) {
+          entry.marketable = false;
+          entry.notes = [...(entry.notes ?? []), "Item is not marketable on Universalis."];
+          marketableFilteredIds.push(entry.item_id);
+          continue;
+        }
+        if (marketableIds) entry.marketable = true;
+        resolvedIdSet.add(entry.item_id);
+      }
 
-      const aggregatedResults = Array.isArray((aggregated as { results?: unknown }).results)
-        ? ((aggregated as { results: Array<Record<string, unknown>> }).results ?? [])
-        : [];
+      const resolvedIds = Array.from(resolvedIdSet);
+      const aggregatedResults: Array<Record<string, unknown>> = [];
+      const failedItems: number[] = [];
+
+      for (const chunk of chunkArray(resolvedIds, 100)) {
+        const aggregated = await clients.universalis.getAggregatedMarketData(world_dc_region, chunk);
+        const chunkResults = Array.isArray((aggregated as { results?: unknown }).results)
+          ? ((aggregated as { results: Array<Record<string, unknown>> }).results ?? [])
+          : [];
+        const chunkFailed = Array.isArray((aggregated as { failedItems?: unknown }).failedItems)
+          ? ((aggregated as { failedItems: number[] }).failedItems ?? [])
+          : [];
+        aggregatedResults.push(...chunkResults);
+        failedItems.push(...chunkFailed);
+      }
 
       const aggregatedMap = new Map<number, Record<string, unknown>>();
       for (const entry of aggregatedResults) {
         if (typeof entry.itemId === "number") {
           aggregatedMap.set(entry.itemId, entry);
+        }
+      }
+
+      const supplyMap = new Map<number, { unitsForSale: number | null; listingsCount: number | null; scope: string | null }>();
+      if (include_supply && resolvedIds.length > 0) {
+        for (const chunk of chunkArray(resolvedIds, 100)) {
+          const fields =
+            chunk.length === 1
+              ? "itemID,unitsForSale,listingsCount,worldName,dcName,regionName"
+              : "items.unitsForSale,items.listingsCount,worldName,dcName,regionName";
+          const currentData = await clients.universalis.getCurrentMarketData(world_dc_region, chunk, {
+            fields,
+          });
+
+          const current = currentData as Record<string, unknown>;
+          const scope = typeof current.worldName === "string"
+            ? "world"
+            : typeof current.dcName === "string"
+              ? "dc"
+              : typeof current.regionName === "string"
+                ? "region"
+                : null;
+
+          const itemsMap = current.items as Record<string, Record<string, unknown>> | undefined;
+          if (itemsMap) {
+            for (const [key, value] of Object.entries(itemsMap)) {
+              const itemId = Number(key);
+              if (Number.isNaN(itemId)) continue;
+              const listingsCount = typeof value?.listingsCount === "number" ? value.listingsCount : null;
+              const unitsForSale = typeof value?.unitsForSale === "number" ? value.unitsForSale : null;
+              supplyMap.set(itemId, { unitsForSale, listingsCount, scope });
+            }
+            continue;
+          }
+
+          const itemId = typeof current.itemID === "number" ? current.itemID : null;
+          if (itemId != null) {
+            const listingsCount = typeof current.listingsCount === "number" ? current.listingsCount : null;
+            const unitsForSale = typeof current.unitsForSale === "number" ? current.unitsForSale : null;
+            supplyMap.set(itemId, { unitsForSale, listingsCount, scope });
+          }
         }
       }
 
@@ -324,6 +414,7 @@ export function registerWorkflowTools(server: McpServer, clients: ClientBundle) 
         .map((entry) => entry.expanded_name ?? entry.input_name);
 
       const ranked = allResolved.map((entry) => {
+        const supply = entry.item_id ? supplyMap.get(entry.item_id) : null;
         if (!entry.item_id) {
           const notes = Array.isArray(entry.notes) ? [...entry.notes] : [];
           if (notes.length === 0) notes.push("Unresolved item name.");
@@ -333,6 +424,28 @@ export function registerWorkflowTools(server: McpServer, clients: ClientBundle) 
             price_scope: null,
             demand_per_day: null,
             demand_scope: null,
+            supply_units: null,
+            listings_count: null,
+            supply_scope: null,
+            saturation_ratio: null,
+            gil_per_cost: null,
+            ranking_score: null,
+            notes,
+          };
+        }
+
+        if (entry.marketable === false) {
+          const notes = Array.isArray(entry.notes) ? [...entry.notes] : [];
+          return {
+            ...entry,
+            price: null,
+            price_scope: null,
+            demand_per_day: null,
+            demand_scope: null,
+            supply_units: supply?.unitsForSale ?? null,
+            listings_count: supply?.listingsCount ?? null,
+            supply_scope: supply?.scope ?? null,
+            saturation_ratio: null,
             gil_per_cost: null,
             ranking_score: null,
             notes,
@@ -365,8 +478,15 @@ export function registerWorkflowTools(server: McpServer, clients: ClientBundle) 
 
         const best = candidates.sort((a, b) => (b.ranking_score ?? -1) - (a.ranking_score ?? -1))[0];
         const notes: string[] = [];
-        if (!best.price) notes.push("No price data available.");
-        if (!best.demand_per_day) notes.push("No demand data available.");
+        if (best.price == null) notes.push("No price data available.");
+        if (best.demand_per_day == null) notes.push("No demand data available.");
+        if (min_velocity != null) {
+          if (best.demand_per_day == null) {
+            notes.push(`Minimum demand threshold (${min_velocity}) not applied.`);
+          } else if (best.demand_per_day < min_velocity) {
+            notes.push(`Below minimum demand threshold (${min_velocity}).`);
+          }
+        }
 
         return {
           ...entry,
@@ -376,8 +496,18 @@ export function registerWorkflowTools(server: McpServer, clients: ClientBundle) 
           price_scope: best.price_scope,
           demand_per_day: best.demand_per_day,
           demand_scope: best.demand_scope,
+          supply_units: supply?.unitsForSale ?? null,
+          listings_count: supply?.listingsCount ?? null,
+          supply_scope: supply?.scope ?? null,
+          saturation_ratio:
+            supply?.unitsForSale != null && best.demand_per_day != null && best.demand_per_day > 0
+              ? supply.unitsForSale / best.demand_per_day
+              : null,
           gil_per_cost: best.gil_per_cost,
-          ranking_score: best.ranking_score,
+          ranking_score:
+            min_velocity != null && best.demand_per_day != null && best.demand_per_day < min_velocity
+              ? null
+              : best.ranking_score,
           notes: notes.length ? notes : undefined,
         };
       });
@@ -400,6 +530,8 @@ export function registerWorkflowTools(server: McpServer, clients: ClientBundle) 
           unmatched_expanded: unmatchedExpanded,
           expanded_items: expandedItems,
           missing_expansions: missingGradeItems.map((item) => item.input_name),
+          unmarketable_item_ids: marketableFilteredIds,
+          failed_items: failedItems,
         },
         meta: {
           source: "universalis",
@@ -407,6 +539,9 @@ export function registerWorkflowTools(server: McpServer, clients: ClientBundle) 
           world_dc_region,
           price_metric,
           price_variant,
+          marketable_only,
+          min_velocity,
+          include_supply,
           query: queryClause,
           ...(fallbackQueryClause ? { fallback_query: fallbackQueryClause } : {}),
         },
