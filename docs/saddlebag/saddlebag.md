@@ -1,1 +1,0 @@
-server : https://docs.saddlebagexchange.com/api

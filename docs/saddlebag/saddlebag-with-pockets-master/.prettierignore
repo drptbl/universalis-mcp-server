@@ -1,8 +1,0 @@
-.cache
-.github
-*.css
-
-/build
-/functions
-/node_modules
-/public

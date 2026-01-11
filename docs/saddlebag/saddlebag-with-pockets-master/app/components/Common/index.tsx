@@ -1,6 +1,0 @@
-export * from './PageWrapper'
-export * from './Title'
-export * from './TitleH2'
-export * from './ContentContainer'
-export * from './Section'
-export { default as Banner } from './Banner'
