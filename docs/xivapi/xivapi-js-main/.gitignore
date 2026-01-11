@@ -1,0 +1,11 @@
+# ignore build outputs
+dist/
+coverage/
+build/
+
+# ignore dependencies
+node_modules/
+
+# ignore package locks and logs
+yarn.lock
+*.log
