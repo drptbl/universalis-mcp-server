@@ -2,6 +2,15 @@
   "name": "universalis-mcp-server",
   "version": "0.1.0",
   "description": "MCP server for Universalis and XIVAPI",
+  "author": "Jakub Mucha <jakub.mucha@icloud.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/drptbl/universalis-mcp-server.git"
+  },
+  "bugs": {
+    "url": "https://github.com/drptbl/universalis-mcp-server/issues"
+  },
+  "homepage": "https://github.com/drptbl/universalis-mcp-server#readme",
   "type": "module",
   "main": "dist/index.js",
   "bin": {
@@ -12,6 +21,7 @@
   ],
   "scripts": {
     "build": "tsc && chmod 755 ./dist/index.js",
+    "prepublishOnly": "pnpm build",
     "lint": "biome check .",
     "format": "biome format --write ."
   },
