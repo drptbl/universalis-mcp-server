@@ -58,4 +58,5 @@ Notes:
 - Some Saddlebag endpoints call Universalis directly; be mindful of rate limits.
 - saddlebag_get_raw_stats supports item_ids = -1 for all items and can return very large payloads.
 - Wiki pages are curated snapshots; refresh with scripts/update-wiki-docs.mjs as needed.
+- Set WIKI_FETCH_MODE=live to fetch allowlisted wiki pages from GitHub (cached by WIKI_REFRESH_TTL_MS).
 `;

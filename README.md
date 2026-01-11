@@ -132,6 +132,8 @@ If you change code, re-run `pnpm build` and restart the MCP connection.
 - `UNIVERSALIS_TIMEOUT_MS`: Request timeout for Universalis (default: 30000).
 - `XIVAPI_TIMEOUT_MS`: Request timeout for XIVAPI (default: 30000).
 - `SADDLEBAG_TIMEOUT_MS`: Request timeout for Saddlebag (default: 30000).
+- `WIKI_FETCH_MODE`: `local` (default) for snapshot files or `live` to fetch from GitHub.
+- `WIKI_REFRESH_TTL_MS`: Cache TTL for live wiki fetches (default: 3600000).
 - `XIVAPI_LANGUAGE`: Default XIVAPI language (default: `en`).
 - `XIVAPI_VERSION`: Default XIVAPI version (default: `latest`).
 
@@ -141,3 +143,4 @@ If you change code, re-run `pnpm build` and restart the MCP connection.
 - Tools support `response_format` as `markdown` or `json`.
 - Some Saddlebag endpoints proxy Universalis data; avoid excessive polling.
 - Wiki pages are curated snapshots stored in `docs/wiki`.
+- Set `WIKI_FETCH_MODE=live` to refresh wiki pages at runtime using the allowlisted index.

@@ -26,8 +26,19 @@ type WikiIndex = {
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const wikiRoot = path.resolve(__dirname, "..", "..", "docs", "wiki");
 const wikiIndexPath = path.join(wikiRoot, "index.json");
+const WIKI_FETCH_MODE = (process.env.WIKI_FETCH_MODE ?? "local").toLowerCase();
+const WIKI_REFRESH_TTL_MS = Number.parseInt(process.env.WIKI_REFRESH_TTL_MS ?? "", 10);
+const DEFAULT_WIKI_REFRESH_TTL_MS = 1000 * 60 * 60;
+const wikiTtlMs = Number.isFinite(WIKI_REFRESH_TTL_MS)
+  ? WIKI_REFRESH_TTL_MS
+  : DEFAULT_WIKI_REFRESH_TTL_MS;
 
 let wikiIndexCache: WikiIndex | null = null;
+const wikiLiveCache = new Map<string, { content: string; fetchedAt: number }>();
+
+function rawWikiUrl(repo: string, slug: string) {
+  return `https://raw.githubusercontent.com/wiki/${repo}/${slug}.md`;
+}
 
 async function loadWikiIndex(): Promise<WikiIndex> {
   if (wikiIndexCache) return wikiIndexCache;
@@ -138,7 +149,36 @@ export function registerWikiTools(server: McpServer) {
       }
 
       const filePath = path.join(wikiRoot, resolvedSource.id, match.file);
-      const content = await readFile(filePath, "utf8");
+      const cacheKey = `${resolvedSource.id}:${match.slug}`;
+      let content = "";
+      let fetchMode = "local";
+      let cacheHit = false;
+
+      if (WIKI_FETCH_MODE === "live") {
+        fetchMode = "live";
+        const cached = wikiLiveCache.get(cacheKey);
+        const now = Date.now();
+        if (cached && now - cached.fetchedAt < wikiTtlMs) {
+          content = cached.content;
+          cacheHit = true;
+        } else {
+          try {
+            const url = rawWikiUrl(resolvedSource.repo, match.slug);
+            const res = await fetch(url);
+            if (!res.ok) {
+              throw new Error(`Failed to fetch wiki page (${res.status})`);
+            }
+            content = await res.text();
+            wikiLiveCache.set(cacheKey, { content, fetchedAt: now });
+          } catch (error) {
+            fetchMode = "fallback_local";
+            content = await readFile(filePath, "utf8");
+          }
+        }
+      } else {
+        content = await readFile(filePath, "utf8");
+      }
+
       let outputContent = content;
       let truncated = false;
 
@@ -161,7 +201,12 @@ export function registerWikiTools(server: McpServer) {
         title: "Wiki Page",
         responseFormat: response_format,
         data,
-        meta: { source: "wiki", truncated },
+        meta: {
+          source: "wiki",
+          truncated,
+          fetch_mode: fetchMode,
+          cache_hit: cacheHit,
+        },
         summaryLines,
       });
     },
