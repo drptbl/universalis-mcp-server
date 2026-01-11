@@ -8,6 +8,7 @@ import { createClients } from "./services/clients.js";
 import { registerLookupTools } from "./tools/lookup.js";
 import { registerMarketTools } from "./tools/market.js";
 import { registerReferenceTools } from "./tools/reference.js";
+import { registerSaddlebagTools } from "./tools/saddlebag.js";
 import { registerStatsTools } from "./tools/stats.js";
 import { registerWorkflowTools } from "./tools/workflows.js";
 
@@ -35,6 +36,7 @@ async function main() {
     userAgent,
     universalisTimeoutMs: toNumber(process.env.UNIVERSALIS_TIMEOUT_MS),
     xivapiTimeoutMs: toNumber(process.env.XIVAPI_TIMEOUT_MS),
+    saddlebagTimeoutMs: toNumber(process.env.SADDLEBAG_TIMEOUT_MS),
     xivapiLanguage: process.env.XIVAPI_LANGUAGE,
     xivapiVersion: process.env.XIVAPI_VERSION,
   });
@@ -43,6 +45,7 @@ async function main() {
   registerReferenceTools(server, clients);
   registerStatsTools(server, clients);
   registerLookupTools(server, clients);
+  registerSaddlebagTools(server, clients);
   registerWorkflowTools(server, clients);
 
   server.registerPrompt(

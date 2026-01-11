@@ -1,10 +1,10 @@
 # universalis-mcp-server
 
-MCP server for Universalis market data and XIVAPI item lookup.
+MCP server for FFXIV market data via Universalis + Saddlebag Exchange, plus XIVAPI item lookup.
 
 ## Capabilities
 
-This MCP server exposes read-only tools for Universalis market data and XIVAPI item lookup.
+This MCP server exposes read-only tools for Universalis market data, Saddlebag Exchange analytics, and XIVAPI item lookup.
 All tools support `response_format` as `markdown` or `json`.
 
 ### Market board data (Universalis)
@@ -23,6 +23,25 @@ All tools support `response_format` as `markdown` or `json`.
 ### Workflows
 
 - `universalis_rank_items_by_profitability`: Resolve names, fetch aggregated data, and rank by demand and profit.
+
+### Market analytics (Saddlebag Exchange)
+
+- `saddlebag_get_listing_metrics`: Listing competition metrics and current listings.
+- `saddlebag_get_history_metrics`: Aggregated history metrics and price distributions.
+- `saddlebag_get_raw_stats`: Daily snapshot stats (median, average, sales volume).
+- `saddlebag_get_scrip_exchange`: Gil-per-scrip rankings.
+- `saddlebag_get_shopping_list`: Crafting shopping list across servers (may return exception payloads).
+- `saddlebag_get_export_prices`: Cross-world price comparison for export trading.
+- `saddlebag_get_marketshare`: Marketshare leaderboard snapshot for a server.
+- `saddlebag_get_reselling_scan`: Reselling opportunities (region/DC/vendor filters).
+- `saddlebag_get_weekly_price_group_delta`: Weekly deltas for custom item groups.
+- `saddlebag_get_price_check`: Price alert checks (user-supplied auctions).
+- `saddlebag_get_quantity_check`: Quantity alert checks (user-supplied auctions).
+- `saddlebag_get_sale_alert`: Sale alerts for retainer listings.
+- `saddlebag_get_craftsim`: Crafting profitability scan (use `max_results` to limit payloads).
+- `saddlebag_get_blog_description`: Item description text lookup.
+
+Best-deals is excluded (premium gated + inconsistent API validation).
 
 ### Reference data (Universalis)
 
@@ -97,9 +116,11 @@ If you change code, re-run `pnpm build` and restart the MCP connection.
 
 - `UNIVERSALIS_BASE_URL`: Override Universalis base URL (default: `https://universalis.app/api/v2`).
 - `XIVAPI_BASE_URL`: Override XIVAPI base URL (default: `https://v2.xivapi.com/api`).
+- `SADDLEBAG_BASE_URL`: Override Saddlebag base URL (default: `https://docs.saddlebagexchange.com/api`).
 - `UNIVERSALIS_MCP_USER_AGENT`: Custom User-Agent header.
 - `UNIVERSALIS_TIMEOUT_MS`: Request timeout for Universalis (default: 30000).
 - `XIVAPI_TIMEOUT_MS`: Request timeout for XIVAPI (default: 30000).
+- `SADDLEBAG_TIMEOUT_MS`: Request timeout for Saddlebag (default: 30000).
 - `XIVAPI_LANGUAGE`: Default XIVAPI language (default: `en`).
 - `XIVAPI_VERSION`: Default XIVAPI version (default: `latest`).
 
@@ -107,3 +128,4 @@ If you change code, re-run `pnpm build` and restart the MCP connection.
 
 - Rate limits are enforced client-side for Universalis and XIVAPI.
 - Tools support `response_format` as `markdown` or `json`.
+- Some Saddlebag endpoints proxy Universalis data; avoid excessive polling.

@@ -1,9 +1,12 @@
 export const UNIVERSALIS_BASE_URL =
   process.env.UNIVERSALIS_BASE_URL ?? "https://universalis.app/api/v2";
 export const XIVAPI_BASE_URL = process.env.XIVAPI_BASE_URL ?? "https://v2.xivapi.com/api";
+export const SADDLEBAG_BASE_URL =
+  process.env.SADDLEBAG_BASE_URL ?? "https://docs.saddlebagexchange.com/api";
 
 export const DEFAULT_UNIVERSALIS_TIMEOUT_MS = 30000;
 export const DEFAULT_XIVAPI_TIMEOUT_MS = 30000;
+export const DEFAULT_SADDLEBAG_TIMEOUT_MS = 30000;
 export const DEFAULT_TIMEOUT_MS = 30000;
 export const DEFAULT_MATERIA_CACHE_TTL_MS = 1000 * 60 * 60 * 24;
 export const CHARACTER_LIMIT = 25000;
