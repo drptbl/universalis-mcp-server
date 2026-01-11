@@ -40,8 +40,8 @@ export class XivapiClient {
   private defaultLanguage: string;
   private defaultVersion: string;
 
-  private itemCache = new LRUCache<string, unknown>({ max: 500, ttl: 1000 * 60 * 60 * 24 });
-  private searchCache = new LRUCache<string, unknown>({ max: 200, ttl: 1000 * 60 * 15 });
+  private itemCache = new LRUCache<string, object>({ max: 500, ttl: 1000 * 60 * 60 * 24 });
+  private searchCache = new LRUCache<string, object>({ max: 200, ttl: 1000 * 60 * 15 });
 
   constructor(options: XivapiClientOptions = {}) {
     this.baseUrl = options.baseUrl ?? XIVAPI_BASE_URL;
@@ -53,12 +53,12 @@ export class XivapiClient {
   }
 
   async search(params: XivapiSearchParams) {
-    const normalized = this.withDefaults(params);
+    const normalized = this.withDefaults({ ...(params as unknown as Record<string, unknown>) });
     const cacheKey = JSON.stringify(normalized);
     const cached = this.searchCache.get(cacheKey);
     if (cached) return cached;
 
-    const data = await requestJson<unknown>({
+    const data = await requestJson<object>({
       baseUrl: this.baseUrl,
       path: "/search",
       query: normalized,
@@ -71,12 +71,12 @@ export class XivapiClient {
   }
 
   async getItemById(itemId: number, params: XivapiRowParams = {}) {
-    const normalized = this.withDefaults(params);
+    const normalized = this.withDefaults({ ...(params as unknown as Record<string, unknown>) });
     const cacheKey = JSON.stringify({ itemId, ...normalized });
     const cached = this.itemCache.get(cacheKey);
     if (cached) return cached;
 
-    const data = await requestJson<unknown>({
+    const data = await requestJson<object>({
       baseUrl: this.baseUrl,
       path: `/sheet/Item/${itemId}`,
       query: normalized,

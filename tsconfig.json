@@ -11,7 +11,7 @@
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "types": ["node"],
-    "preserveShebang": true
+    "declaration": false
   },
   "include": ["src"]
 }

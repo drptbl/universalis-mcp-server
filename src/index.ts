@@ -19,10 +19,6 @@ async function main() {
   const server = new McpServer({
     name: "universalis-mcp-server",
     version: pkg.version,
-    capabilities: {
-      resources: {},
-      tools: {},
-    },
   });
 
   const userAgent =

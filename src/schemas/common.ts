@@ -12,5 +12,5 @@ export const ResponseFormatSchema = z
 
 export const BaseOutputSchema = z.object({
   data: z.unknown(),
-  meta: z.record(z.unknown()).optional(),
+  meta: z.record(z.string(), z.unknown()).optional(),
 });
