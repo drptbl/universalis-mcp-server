@@ -16,7 +16,13 @@ All tools support `response_format` as `markdown` or `json`.
 ### Item lookup (XIVAPI)
 
 - `universalis_resolve_items_by_name`: Search items by name with `partial` or `exact` matching.
+- `universalis_resolve_items_by_names`: Resolve multiple item names in one search query.
 - `universalis_get_item_by_id`: Fetch a single item row by ID.
+- `universalis_get_items_by_ids`: Fetch multiple item rows by ID in one request.
+
+### Workflows
+
+- `universalis_rank_items_by_profitability`: Resolve names, fetch aggregated data, and rank by demand and profit.
 
 ### Reference data (Universalis)
 

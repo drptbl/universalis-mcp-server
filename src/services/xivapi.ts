@@ -2,6 +2,7 @@ import { LRUCache } from "lru-cache";
 import type Bottleneck from "bottleneck";
 import { DEFAULT_XIVAPI_LANGUAGE, DEFAULT_XIVAPI_VERSION, XIVAPI_BASE_URL } from "../constants.js";
 import { requestJson } from "./http.js";
+import { chunkArray } from "../utils/array.js";
 
 export interface XivapiClientOptions {
   baseUrl?: string;
@@ -86,6 +87,49 @@ export class XivapiClient {
     });
     this.itemCache.set(cacheKey, data);
     return data;
+  }
+
+  async getItemsByIds(itemIds: number[], params: XivapiRowParams = {}, chunkSize = 100) {
+    const uniqueIds = Array.from(new Set(itemIds));
+    if (uniqueIds.length === 0) {
+      return { rows: [] as unknown[] };
+    }
+
+    const chunks = chunkArray(uniqueIds, chunkSize);
+    const rows: unknown[] = [];
+    let schema: unknown;
+    let version: unknown;
+
+    for (const chunk of chunks) {
+      const normalized = this.withDefaults({ ...(params as unknown as Record<string, unknown>) });
+      const data = await requestJson<Record<string, unknown>>({
+        baseUrl: this.baseUrl,
+        path: "/sheet/Item",
+        query: {
+          ...normalized,
+          rows: chunk.join(","),
+        },
+        limiter: this.limiter,
+        timeoutMs: this.timeoutMs,
+        userAgent: this.userAgent,
+      });
+
+      if (schema === undefined && "schema" in data) {
+        schema = data.schema;
+      }
+      if (version === undefined && "version" in data) {
+        version = data.version;
+      }
+      if (Array.isArray(data.rows)) {
+        rows.push(...data.rows);
+      }
+    }
+
+    return {
+      rows,
+      ...(schema !== undefined ? { schema } : {}),
+      ...(version !== undefined ? { version } : {}),
+    };
   }
 
   private withDefaults(params: Record<string, unknown>) {

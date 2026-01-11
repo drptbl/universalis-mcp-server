@@ -3,11 +3,13 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import pkg from "../package.json" with { type: "json" };
+import { SERVER_INSTRUCTIONS } from "./instructions.js";
 import { createClients } from "./services/clients.js";
 import { registerLookupTools } from "./tools/lookup.js";
 import { registerMarketTools } from "./tools/market.js";
 import { registerReferenceTools } from "./tools/reference.js";
 import { registerStatsTools } from "./tools/stats.js";
+import { registerWorkflowTools } from "./tools/workflows.js";
 
 function toNumber(value: string | undefined) {
   if (!value) return undefined;
@@ -16,10 +18,15 @@ function toNumber(value: string | undefined) {
 }
 
 async function main() {
-  const server = new McpServer({
-    name: "universalis-mcp-server",
-    version: pkg.version,
-  });
+  const server = new McpServer(
+    {
+      name: "universalis-mcp-server",
+      version: pkg.version,
+    },
+    {
+      instructions: SERVER_INSTRUCTIONS,
+    },
+  );
 
   const userAgent =
     process.env.UNIVERSALIS_MCP_USER_AGENT ?? `universalis-mcp-server/${pkg.version}`;
@@ -36,6 +43,26 @@ async function main() {
   registerReferenceTools(server, clients);
   registerStatsTools(server, clients);
   registerLookupTools(server, clients);
+  registerWorkflowTools(server, clients);
+
+  server.registerPrompt(
+    "universalis_usage_guide",
+    {
+      title: "Universalis Usage Guide",
+      description: "Quick guidance on which tools to use and when.",
+    },
+    async () => ({
+      messages: [
+        {
+          role: "user",
+          content: {
+            type: "text",
+            text: SERVER_INSTRUCTIONS,
+          },
+        },
+      ],
+    }),
+  );
 
   const transport = new StdioServerTransport();
   await server.connect(transport);
