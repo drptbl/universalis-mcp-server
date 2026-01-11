@@ -37,6 +37,22 @@ codex mcp add universalis-mcp-server -- env UNIVERSALIS_TIMEOUT_MS=30000 XIVAPI_
 claude mcp add universalis-mcp-server env UNIVERSALIS_TIMEOUT_MS=30000 XIVAPI_TIMEOUT_MS=30000 npx universalis-mcp-server@latest
 ```
 
+## Local Development with Codex and Claude Code
+
+Build the server and point MCP to the local `dist` entry:
+
+```bash
+pnpm build
+
+# Codex
+codex mcp add universalis-mcp-server -- node ./dist/index.js
+
+# Claude Code
+claude mcp add universalis-mcp-server node ./dist/index.js
+```
+
+If you change code, re-run `pnpm build` and restart the MCP connection.
+
 ## Environment Variables
 
 - `UNIVERSALIS_BASE_URL`: Override Universalis base URL (default: `https://universalis.app/api/v2`).
