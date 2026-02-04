@@ -36,7 +36,7 @@
   ],
   "license": "ISC",
   "dependencies": {
-    "@modelcontextprotocol/sdk": "1.25.2",
+    "@modelcontextprotocol/sdk": "1.26.0",
     "bottleneck": "2.19.5",
     "lru-cache": "11.2.4",
     "zod": "4.3.5"
